@@ -11,7 +11,6 @@ def run_discord_bot():
 
     @client.event
     async def on_ready():
-        # print(f'{client.user} is now running!')
         try:
             synced = await client.tree.sync()
             print(f"Synced {len(synced)} command(s)")
@@ -35,33 +34,5 @@ def run_discord_bot():
 
         signals_message = signals_message.replace("*️⃣", ":asterisk:")
         await interaction.followup.send(signals_message)
-
-    # @client.command(name="signals_info")
-    # async def signals_info(ctx):
-    #     await ctx.send("asd")
-
-    # @client.event
-    # async def on_message(message):
-    #     username = str(message.author)
-    #     user_message = str(message.content)
-    #     channel = str(message.channel)
-    #
-    #     # print(f"{username} said: '{user_message}' ({channel})")
-    #
-    #     if message.author == client.user:
-    #         return
-    #
-    #     if message.content != "/signals_info":
-    #         return
-    #
-    #     pinned_messages = [msg for msg in await message.channel.pins()]
-    #     signals_message = ""
-    #
-    #     for msg in pinned_messages:
-    #         string = msg.content
-    #         signals_message += string[:string.index("\n")] + "\n"
-    #
-    #     signals_message = signals_message.replace("*️⃣", ":asterisk:")
-    #     await message.channel.send(content=signals_message, mention_author=True)
 
     client.run(TOKEN)
