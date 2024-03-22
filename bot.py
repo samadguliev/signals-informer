@@ -31,12 +31,31 @@ def run_discord_bot():
             return
 
         signals_message = ""
+        embed_list = []
 
         for msg in pinned_messages:
-            string = msg.content
-            signals_message += string[:string.index("\n")] + "\n"
+            msg_content = msg.content
+            formatted_msg = msg_content[:msg_content.index("\n")] + "\n"
+            formatted_msg = formatted_msg.replace("*️⃣", ":asterisk:")
 
-        signals_message = signals_message.replace("*️⃣", ":asterisk:")
-        await interaction.followup.send(signals_message)
+            if (len(signals_message) + len(formatted_msg)) < 1000:
+                signals_message += formatted_msg
+                continue
+
+            embed_list.append(signals_message)
+            signals_message = ""
+            signals_message += formatted_msg
+
+        if len(signals_message) > 0:
+            embed_list.append(signals_message)
+
+        embed_var = discord.Embed(title="Pinned signals", description="", color=0x00ff00)
+
+        count = 1
+        for val in embed_list:
+            embed_var.add_field(name=f"Part {count}", value=val, inline=False)
+            count += 1
+
+        await interaction.followup.send(embed=embed_var)
 
     client.run(TOKEN)
