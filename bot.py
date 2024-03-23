@@ -49,7 +49,7 @@ def run_discord_bot():
         if len(signals_message) > 0:
             embed_list.append(signals_message)
 
-        embed_var = discord.Embed(title="Pinned signals", description="", color=0x00ff00)
+        embed_var = discord.Embed(title="Pinned signals", description=f"Total count: {len(pinned_messages)}", color=0x00ff00)
 
         count = 1
         for val in embed_list:
