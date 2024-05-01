@@ -35,7 +35,13 @@ def run_discord_bot():
 
         for msg in pinned_messages:
             msg_content = msg.content
-            formatted_msg = msg_content[:msg_content.index("\n")] + "\n"
+
+            try:
+                index = msg_content.index("\n")
+            except ValueError:
+                index = None
+
+            formatted_msg = msg_content[:msg_content.index("\n")] + "\n" if index else msg_content + "\n"
             formatted_msg = formatted_msg.replace("*️⃣", ":asterisk:")
 
             if (len(signals_message) + len(formatted_msg)) < 1000:
