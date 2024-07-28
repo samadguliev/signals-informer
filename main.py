@@ -2,13 +2,18 @@ import bot
 from database import db
 from models import Test
 from dotenv import load_dotenv
+from logger import logger
 
 load_dotenv()
 
 
 def initialize_db():
-    db.connect()
-    db.create_tables([Test])
+    try:
+        db.connect()
+        db.create_tables([Test])
+        logger.info("Success connection")
+    except BaseException as e:
+        logger.error("Initializing error: " + str(e))
 
 
 def close_db():

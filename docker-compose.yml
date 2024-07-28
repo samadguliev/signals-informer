@@ -6,11 +6,13 @@ services:
   web:
     build: .
     restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
     networks:
       - bot
 
   postgres:
-    image: postgres:13
+    image: postgres:13-alpine
     container_name: pg_db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

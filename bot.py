@@ -2,6 +2,7 @@ import os
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
+from logger import logger
 
 load_dotenv()
 
@@ -17,7 +18,7 @@ def run_discord_bot():
     async def on_ready():
         try:
             synced = await client.tree.sync()
-            print(f"Synced {len(synced)} command(s)")
+            logger.info(f"Synced {len(synced)} command(s)")
         except Exception as e:
             print(e)
 

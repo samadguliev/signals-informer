@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
-import os
+from contextlib import contextmanager
 from playhouse.pool import PooledPostgresqlExtDatabase
+import os
 
 load_dotenv()
 
@@ -23,3 +24,13 @@ db = PooledPostgresqlExtDatabase(
     max_connections=20,
     stale_timeout=300,  # 5 minutes
 )
+
+
+@contextmanager
+def get_db_connection():
+    db.connect(reuse_if_open=True)
+    try:
+        yield db
+    finally:
+        if not db.is_closed():
+            db.close()
