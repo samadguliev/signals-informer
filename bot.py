@@ -7,7 +7,6 @@ from logger import logger
 from models import Signal
 
 load_dotenv()
-mutex = asyncio.Lock()
 
 
 def run_discord_bot():
@@ -16,6 +15,7 @@ def run_discord_bot():
 
     TOKEN = os.getenv("TOKEN")
     client = commands.Bot(command_prefix="/", intents=intents)
+    mutex = asyncio.Lock()
 
     @client.event
     async def on_ready():
@@ -29,41 +29,40 @@ def run_discord_bot():
         signals = Signal.get_all()
         if len(signals) != 0:
             return signals
-
         return await init_table(channel)
 
     async def init_table(channel) -> list[Signal]:
-        async with mutex:
-            try:
-                Signal.clear_table()
-                logger.info("Table is empty")
+        try:
+            Signal.clear_table()
+            logger.info("Table is empty")
 
-                pinned_messages = await channel.pins()
-                if len(pinned_messages) == 0:
-                    return []
+            pinned_messages = await channel.pins()
+            if len(pinned_messages) == 0:
+                return []
 
-                messages: list[str] = []
-                for msg in pinned_messages:
-                    msg_content = msg.content
+            messages: list[str] = []
+            for msg in pinned_messages:
+                msg_content = msg.content
 
-                    try:
-                        index = msg_content.index("\n")
-                    except ValueError:
-                        index = None
+                try:
+                    index = msg_content.index("\n")
+                except ValueError:
+                    index = None
 
-                    formatted_msg = msg_content[:msg_content.index("\n")] + "\n" if index else msg_content
-                    formatted_msg = formatted_msg.replace("*️⃣", ":asterisk:")
-                    messages.append(formatted_msg)
+                formatted_msg = msg_content[:msg_content.index("\n")] + "\n" if index else msg_content
+                formatted_msg = formatted_msg.replace("*️⃣", ":asterisk:")
+                messages.append(formatted_msg)
 
-                logger.info("Init is finished")
-                return Signal.create_signals(messages)
+            logger.info("Init is finished")
+            return Signal.create_signals(messages)
 
-            except Exception as e:
-                logger.error(e)
+        except Exception as e:
+            logger.error(e)
 
     @client.event
     async def on_guild_channel_pins_update(channel, last_pin):
-        await init_table(channel)
+        async with mutex:
+            await init_table(channel)
 
     @client.tree.command(name="signals_info")
     async def signals_info(interaction: discord.Interaction):
