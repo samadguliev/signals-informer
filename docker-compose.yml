@@ -1,4 +1,33 @@
+networks:
+  bot_net:
+    driver: bridge
+
 services:
-  web:
+  bot:
     build: .
     restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - bot_net
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13-alpine
+    container_name: pg_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - bot_net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+    postgres_data:
