@@ -26,14 +26,14 @@ def run_discord_bot():
             logger.error(e)
 
     async def get_pinned_messages(channel) -> list[Signal]:
-        signals = Signal.get_all()
+        signals = Signal.get_all(channel.id)
         if len(signals) != 0:
             return signals
         return await init_table(channel)
 
     async def init_table(channel) -> list[Signal]:
         try:
-            Signal.clear_table()
+            Signal.clear_table(channel.id)
             logger.info("Table is empty")
 
             pinned_messages = await channel.pins()
@@ -54,7 +54,7 @@ def run_discord_bot():
                 messages.append(formatted_msg)
 
             logger.info("Init is finished")
-            return Signal.create_signals(messages)
+            return Signal.create_signals(messages, channel.id)
 
         except Exception as e:
             logger.error(e)
