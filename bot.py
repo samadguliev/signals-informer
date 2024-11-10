@@ -49,7 +49,8 @@ def run_discord_bot():
                 except ValueError:
                     index = None
 
-                formatted_msg = msg_content[:msg_content.index("\n")] + "\n" if index else msg_content
+                formatted_msg = msg_content[:msg_content.index("\n")] if index else msg_content
+                formatted_msg += "\n"
                 formatted_msg = formatted_msg.replace("*️⃣", ":asterisk:")
                 messages.append(formatted_msg)
 
