@@ -15,6 +15,42 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery:
+    build: .
+    command: celery -A scheduler worker --loglevel=info
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - bot_net
+    volumes:
+      - .:/app
+    working_dir: /app  # Set working directory
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build: .
+    command: celery -A scheduler beat --loglevel=info
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - bot_net
+    volumes:
+      - .:/app
+    working_dir: /app  # Set working directory
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   postgres:
     image: postgres:13-alpine
@@ -35,5 +71,18 @@ services:
       timeout: 5s
       retries: 2
 
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    networks:
+      - bot_net
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+
 volumes:
-    postgres_data:
+  postgres_data:

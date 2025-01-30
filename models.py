@@ -1,7 +1,8 @@
 import datetime
 from logger import logger
-from peewee import Model, CharField, DateTimeField, AutoField, BigIntegerField
+from peewee import Model, CharField, DateTimeField, AutoField, BigIntegerField, DoubleField
 from database import db, get_db_connection
+from peewee import JOIN
 
 
 class BaseModel(Model):
@@ -12,17 +13,17 @@ class BaseModel(Model):
 class Signal(BaseModel):
     id = AutoField()
     channel = BigIntegerField()
-    created = DateTimeField(default=datetime.datetime.now)
+    currency_code = CharField()
     text = CharField()
+    created = DateTimeField(default=datetime.datetime.now)
 
     @staticmethod
-    def create_signals(signals, channel: int) -> list['Signal']:
+    def create_signals(signals) -> list['Signal']:
         with get_db_connection():
             with db.atomic():
                 try:
-                    signals_list: list[Signal] = [Signal(text=signal, channel=channel) for signal in signals]
-                    Signal.bulk_create(signals_list)
-                    return signals_list
+                    Signal.bulk_create(signals)
+                    return signals
                 except BaseException as e:
                     logger.error(str(e))
                     return []
@@ -38,10 +39,54 @@ class Signal(BaseModel):
                     logger.error(str(e))
 
     @staticmethod
-    def get_all(channel: int) -> list['Signal']:
+    def get_by_channel(channel: int) -> list['Signal']:
+        with get_db_connection():
+            try:
+                return Signal.select(Signal, Currency).where(Signal.channel == channel).join(Currency, on=(Signal.currency_code == Currency.code), join_type=JOIN.INNER)
+            except BaseException as e:
+                logger.error(str(e))
+
+    @staticmethod
+    def get_all() -> list['Signal']:
+        with get_db_connection():
+            try:
+                return Signal.select()
+            except BaseException as e:
+                logger.error(str(e))
+
+
+class Currency(BaseModel):
+    id = AutoField()
+    code = CharField()
+    price = DoubleField()
+
+    @staticmethod
+    def get_existing_currencies() -> dict[str, 'Currency']:
         with get_db_connection():
             with db.atomic():
                 try:
-                    return Signal.select().where(Signal.channel == channel)
+                    currencies = Currency.select()
+                    return {currency.code: currency for currency in currencies}
                 except BaseException as e:
                     logger.error(str(e))
+
+    @staticmethod
+    def create_currencies(currencies) -> list['Currency']:
+        with get_db_connection():
+            with db.atomic():
+                try:
+                    Currency.bulk_create(currencies)
+                    return currencies
+                except BaseException as e:
+                    logger.error(str(e))
+
+    @staticmethod
+    def update_currencies(currencies) -> list['Currency']:
+        with get_db_connection():
+            with db.atomic():
+                try:
+                    Currency.bulk_update(currencies, fields=[Currency.price])
+                    return currencies
+                except BaseException as e:
+                    logger.error(str(e))
+
