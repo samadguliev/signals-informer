@@ -12,7 +12,7 @@ class BaseModel(Model):
 
 class Signal(BaseModel):
     id = AutoField()
-    channel = BigIntegerField()
+    channel = BigIntegerField(index=True)
     currency_code = CharField()
     text = CharField()
     created = DateTimeField(default=datetime.datetime.now)
@@ -42,7 +42,7 @@ class Signal(BaseModel):
     def get_by_channel(channel: int) -> list['Signal']:
         with get_db_connection():
             try:
-                return Signal.select(Signal, Currency).where(Signal.channel == channel).join(Currency, on=(Signal.currency_code == Currency.code), join_type=JOIN.INNER)
+                return Signal.select(Signal, Currency).join(Currency, on=(Signal.currency_code == Currency.code), join_type=JOIN.LEFT_OUTER, attr='currency').where(Signal.channel == channel)
             except BaseException as e:
                 logger.error(str(e))
 
@@ -57,18 +57,17 @@ class Signal(BaseModel):
 
 class Currency(BaseModel):
     id = AutoField()
-    code = CharField()
+    code = CharField(index=True, unique=True)
     price = DoubleField()
 
     @staticmethod
     def get_existing_currencies() -> dict[str, 'Currency']:
         with get_db_connection():
-            with db.atomic():
-                try:
-                    currencies = Currency.select()
-                    return {currency.code: currency for currency in currencies}
-                except BaseException as e:
-                    logger.error(str(e))
+            try:
+                currencies = Currency.select()
+                return {currency.code: currency for currency in currencies}
+            except BaseException as e:
+                logger.error(str(e))
 
     @staticmethod
     def create_currencies(currencies) -> list['Currency']:

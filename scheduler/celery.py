@@ -14,8 +14,8 @@ app.conf.update(
 )
 
 app.conf.beat_schedule = {
-    "opache": {
-        "task": 'scheduler.tasks.opache',
+    "update_prices": {
+        "task": 'scheduler.tasks.update_prices',
         "schedule": timedelta(seconds=20),
     },
 }

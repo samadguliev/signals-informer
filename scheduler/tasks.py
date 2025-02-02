@@ -4,17 +4,30 @@ from scheduler.celery import app
 import requests
 
 @app.task
-def opache():
+def update_prices():
+    logger.info("Task started")
     signals = Signal.get_all()
+    if len(signals) == 0:
+        return
+
     existing_currencies = Currency.get_existing_currencies()
+    curr_codes = set(signal.currency_code for signal in signals)
 
     currencies_to_update = []
     currencies_to_create = []
-    curr_codes = set(signal.currency_code for signal in signals)
 
     response = requests.get("https://api.mexc.com/api/v3/ticker/price")
+    if response.status_code != 200:
+        logger.error("Failed to get price data")
+        return
+
     for curr in response.json():
         symbol = curr["symbol"][:-4]
+        usdt = curr["symbol"][-4:]
+
+        if usdt != "USDT":
+            continue
+
         if symbol in curr_codes:
             if symbol in existing_currencies:
                 # Update existing currency

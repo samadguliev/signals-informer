@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from logger import logger
 from models import Signal
+from scheduler.tasks import update_prices
 
 load_dotenv()
 
@@ -51,7 +52,6 @@ def run_discord_bot():
                     index = None
 
                 formatted_msg = msg_content[:msg_content.index("\n")] if index else msg_content
-                formatted_msg += "\n"
                 formatted_msg = formatted_msg.replace("*️⃣", ":asterisk:")
 
                 signal = Signal(channel=channel.id, text=formatted_msg, currency_code="")
@@ -63,7 +63,9 @@ def run_discord_bot():
                 messages.append(signal)
 
             logger.info("Init is finished")
-            return Signal.create_signals(messages)
+            Signal.create_signals(messages)
+            update_prices.delay()
+            return Signal.get_by_channel(channel.id)
 
         except Exception as e:
             logger.error(e)
@@ -88,7 +90,11 @@ def run_discord_bot():
         embed_list = []
 
         for msg in pinned_messages:
-            msg_text = msg.text + ", Price: " + str(msg.currency.price)
+            msg_text = msg.text
+            if hasattr(msg, "currency"):
+                msg_text += ", **Price: " + str(msg.currency.price) + "**"
+            msg_text += "\n"
+
             if (len(signals_message) + len(msg_text)) < 1000:
                 signals_message += msg_text
                 continue
