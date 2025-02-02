@@ -1,6 +1,6 @@
 import bot
 from database import db, get_db_connection
-from models import Signal
+from models import Signal, Currency
 from dotenv import load_dotenv
 from logger import logger
 
@@ -10,7 +10,7 @@ load_dotenv()
 def initialize_db():
     try:
         db.connect()
-        db.create_tables([Signal])
+        db.create_tables([Signal, Currency])
         logger.info("Success connection")
     except BaseException as e:
         logger.error("Initializing error: " + str(e))
