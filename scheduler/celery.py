@@ -16,7 +16,7 @@ app.conf.update(
 app.conf.beat_schedule = {
     "update_prices": {
         "task": 'scheduler.tasks.update_prices',
-        "schedule": timedelta(seconds=20),
+        "schedule": timedelta(seconds=60 * 20),
     },
 }
 
