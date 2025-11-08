@@ -7,6 +7,7 @@ from discord.ext import commands
 from logger import logger
 from models import Signal
 from scheduler.tasks import update_prices
+from telegram_logger import TelegramErrorLogger
 
 load_dotenv()
 
@@ -18,14 +19,17 @@ def run_discord_bot():
     TOKEN = os.getenv("TOKEN")
     client = commands.Bot(command_prefix="/", intents=intents)
     mutex = asyncio.Lock()
+    telegram_logger = TelegramErrorLogger(os.getenv("TELEGRAM_BOT_TOKEN"), os.getenv("TELEGRAM_CHAT_ID"))
 
     @client.event
     async def on_ready():
         try:
             synced = await client.tree.sync()
             logger.info(f"Synced {len(synced)} command(s)")
+            telegram_logger.send_message(f"Synced {len(synced)} command(s)")
         except Exception as e:
             logger.error(e)
+            telegram_logger.log_error(e)
 
     async def get_pinned_messages(channel) -> list[Signal]:
         signals = Signal.get_by_channel(channel.id)
@@ -65,10 +69,18 @@ def run_discord_bot():
             logger.info("Init is finished")
             Signal.create_signals(messages)
             update_prices.delay()
-            return Signal.get_by_channel(channel.id)
+
+            signals_res = Signal.get_by_channel(channel.id)
+
+            telegram_msg_arr = [item.text for item in signals_res]
+            telegram_msg = "\n".join(telegram_msg_arr)
+            telegram_logger.send_message(telegram_msg)
+
+            return signals_res
 
         except Exception as e:
             logger.error(e)
+            telegram_logger.log_error(e)
 
     @client.event
     async def on_guild_channel_pins_update(channel, last_pin):
